@@ -1,14 +1,15 @@
 import os
+import argparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
-from torchvision.models import efficientnet_v2_s, EfficientNet_V2_S_Weights
 from PIL import Image, ImageOps
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from model import initialize_model
 
 # 初始化常數
 IMAGE_SIZE = 224
@@ -108,15 +109,8 @@ def plot_training_progress(train_losses, val_losses, train_pe, val_pe, loss_ylim
     plt.legend()
     plt.tight_layout()
 
-# Model Init
-# 載入 EfficientNet V2 M 模型，並針對你的任務去調整輸出(最後的全連接層)
-def initialize_model():
-    model = efficientnet_v2_s(weights=EfficientNet_V2_S_Weights.DEFAULT)
-    model.classifier[1] = nn.Linear(model.classifier[1].in_features, POINTS_COUNT * 2) # 輸出是關鍵點的 x 和 y 坐標，所以是關鍵點數量 * 2
-    return model
-
 # Main Training
-def main(epochs=50, lr=1e-4, batch_size=32):
+def main(epochs=200, lr=1e-2, batch_size=32, model_name="efficientnet_ms_cbam_3scales"):
     
     
     # ================================================================== #
@@ -149,7 +143,7 @@ def main(epochs=50, lr=1e-4, batch_size=32):
     # ================================================================== #
     
     # 初始化模型、損失函數和優化器
-    model = initialize_model() # 初始化模型
+    model = initialize_model(model_name, num_points=POINTS_COUNT) # 根據模型名稱初始化模型
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # 設置硬體設備
     model.to(device) # 將模型移動到 GPU 或 CPU (硬體設備)上
     
@@ -249,14 +243,22 @@ def main(epochs=50, lr=1e-4, batch_size=32):
     os.makedirs(LOGS_DIR, exist_ok=True)
     os.makedirs(MODELS_DIR, exist_ok=True)
     if best_model_state:
-        model_path = f"{MODELS_DIR}/efficientnetv2s_keypoint_{epochs}_{lr}_{batch_size}_best.pth"
+        model_path = f"{MODELS_DIR}/{model_name}_{epochs}_{lr}_{batch_size}_best.pth"
         torch.save(best_model_state, model_path)
         print(f"Best model saved to: {model_path}")
 
     plot_training_progress(epoch_losses, val_losses, epoch_pixel_errors, val_pixel_errors,
                            loss_ylim=(0, 300), pixel_error_ylim=(0, 200))
-    plt.savefig(f"{LOGS_DIR}/efficientnetv2s_training_plot_{epochs}_{lr}_{batch_size}.png")
+    plt.savefig(f"{LOGS_DIR}/{model_name}_{epochs}_{lr}_{batch_size}.png")
     plt.show()
 
 if __name__ == "__main__":
-    main(epochs=200, lr=1e-2, batch_size=32) # 訓練模型，並且設置訓練的參數
+    parser = argparse.ArgumentParser(description="Train a keypoint detection model")
+    parser.add_argument("--epochs", type=int, default=200, help="Number of epochs to train")
+    parser.add_argument("--lr", type=float, default=1e-2, help="Learning rate")
+    parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
+    parser.add_argument("--model_name", type=str, default="efficientnet_ms_cbam_3scales", help="Model name")
+    args = parser.parse_args()
+
+    main(epochs=args.epochs, lr=args.lr, batch_size=args.batch_size, model_name=args.model_name) # 訓練模型，並且設置訓練的參數
+    # python train.py --epochs 200 --lr 1e-2 --batch_size 32 --model_name efficientnet_ms_cbam_3scales
