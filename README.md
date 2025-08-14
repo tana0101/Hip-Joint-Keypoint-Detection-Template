@@ -27,7 +27,7 @@
 │ ├── train/
 │ │ ├── images/ # 訓練影像
 │ │ └── annotations/ # 訓練 CSV 標註
-│ └── val/
+│ ├── val/
 │ │ ├── images/ # 驗證影像
 │ │ └── annotations/ # 驗證 CSV 標註
 │ └── test/
