@@ -28,11 +28,11 @@
 │ │ ├── images/ # 訓練影像
 │ │ └── annotations/ # 訓練 CSV 標註
 │ └── val/
-│ ├── images/ # 驗證影像
-│ └── annotations/ # 驗證 CSV 標註
-│ ├── test/
-│ │ ├── images/ # 測試影像
-│ │ └── annotations/ # 測試 CSV 標註
+│ │ ├── images/ # 驗證影像
+│ │ └── annotations/ # 驗證 CSV 標註
+│ └── test/
+│   ├── images/ # 測試影像
+│   └── annotations/ # 測試 CSV 標註
 ├── models/ # 保存訓練好的模型
 ├── logs/ # 訓練過程的圖表
 └── results/ # 預測結果
